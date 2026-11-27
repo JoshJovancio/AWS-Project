@@ -1,4 +1,19 @@
 services:
+  mysql:
+    image: mysql:8.0
+    env_file:
+      - ./api/.env
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
   equipment-api:
     image: ${ECR_REGISTRY}/equipment-api:latest
     build: ./api
@@ -6,6 +21,9 @@ services:
       - "3000"
     env_file:
       - ./api/.env
+    depends_on:
+      mysql:
+        condition: service_healthy
     networks:
       - app-network
     restart: unless-stopped
@@ -23,3 +41,6 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  mysql-data:
